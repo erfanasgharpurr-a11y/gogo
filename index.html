@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>Jump Scare 😱</title>
+  <meta name="theme-color" content="#000000" />
+  <style>
+    :root{--bg:#000;--fg:#fff;--accent:#ff0000;}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:#000;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    .screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+    .hidden{display:none}
+    button{
+      font-size:clamp(18px,4.5vw,28px);
+      padding:1rem 1.25rem;border-radius:16px;border:none;
+      background:#fff;color:#000;font-weight:700;box-shadow:0 6px 20px rgba(255,255,255,.12);
+    }
+    .face{
+      position:fixed;inset:0;display:grid;place-items:center;
+      background:#000;
+    }
+    .face-inner{transform:scale(.5);opacity:0;transition:transform .05s linear, opacity .05s linear}
+    .face.show .face-inner{transform:scale(1.12);opacity:1}
+    .flash{animation:flash .18s steps(1,end) infinite}
+    @keyframes flash{50%{background:#ff0000}}
+    .shake{animation:shake .35s linear 7}
+    @keyframes shake{
+      0%{transform:translate(0,0) scale(1.12)}
+      20%{transform:translate(7px,-7px) scale(1.12)}
+      40%{transform:translate(-7px,7px) scale(1.12)}
+      60%{transform:translate(7px,7px) scale(1.12)}
+      80%{transform:translate(-7px,-7px) scale(1.12)}
+      100%{transform:translate(0,0) scale(1.12)}
+    }
+    svg{width:min(92vw,920px);height:auto;filter:drop-shadow(0 0 40px rgba(255,0,0,.75))}
+  </style>
+</head>
+<body>
+  <main class="screen" id="intro">
+    <div style="text-align:center">
+      <h1>برای شروع، صفحه رو لمس کن</h1>
+      <button id="startBtn">شروع</button>
+    </div>
+  </main>
+
+  <section class="face hidden" id="face">
+    <div class="face-inner" id="faceInner">
+      <svg viewBox="0 0 512 512">
+        <circle cx="256" cy="256" r="230" fill="red"/>
+        <ellipse cx="166" cy="210" rx="70" ry="55" fill="#000"/>
+        <ellipse cx="346" cy="210" rx="70" ry="55" fill="#000"/>
+        <circle cx="166" cy="210" r="16" fill="#f00"/>
+        <circle cx="346" cy="210" r="16" fill="#f00"/>
+        <path d="M120 330 Q256 450 392 330 Q350 360 256 360 Q162 360 120 330Z" fill="#000"/>
+      </svg>
+    </div>
+  </section>
+
+  <script>
+    const intro = document.getElementById('intro');
+    const face = document.getElementById('face');
+    const faceInner = document.getElementById('faceInner');
+    const startBtn = document.getElementById('startBtn');
+
+    let audioCtx, masterGain;
+
+    function makeScream(){
+      const ctx = audioCtx;
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(1, ctx.currentTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.4);
+
+      const osc = ctx.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(800, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 1);
+
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start();
+      osc.stop(ctx.currentTime + 1.5);
+    }
+
+    function vibrate(){
+      try{navigator.vibrate([50,100,50,200])}catch(e){}
+    }
+
+    function jumpScare(){
+      face.classList.remove('hidden');
+      face.classList.add('flash');
+      faceInner.classList.add('show','shake');
+      makeScream();
+      vibrate();
+    }
+
+    startBtn.addEventListener('click', () => {
+      try{
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain();
+        masterGain.connect(audioCtx.destination);
+      }catch(e){}
+      intro.classList.add('hidden');
+      setTimeout(jumpScare, 1000 + Math.random()*2000);
+    });
+  </script>
+</body>
+</html>
